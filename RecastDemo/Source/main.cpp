@@ -69,6 +69,43 @@ static SampleItem g_samples[] =
 };
 static const int g_nsamples = sizeof(g_samples) / sizeof(SampleItem);
 
+int mainAlbert(int /*argc*/, char** /*argv*/)
+{
+    BuildContext ctx;
+    
+    // init sample
+    Sample* sample = g_samples[0].create();  // solo mesh
+    if (!sample)
+        return -1;
+    sample->setContext(&ctx);
+
+    // init geom
+    InputGeom* geom = new InputGeom;
+    
+    // load obj file
+    std::string path = "/Users/albertlaw/code/recastnavigation/RecastDemo/Bin/Meshes/Tile_+009_+008_L22.obj";
+    if (!geom->load(&ctx, path))
+        return -2;
+    sample->handleMeshChanged(geom);
+    
+    // init build settings
+    BuildSettings settings;
+    memset(&settings, 0, sizeof(settings));
+    rcVcopy(settings.navMeshBMin, geom->getNavMeshBoundsMin());
+    rcVcopy(settings.navMeshBMax, geom->getNavMeshBoundsMax());
+    sample->collectSettings(settings);
+    geom->saveGeomSet(&settings);
+    
+    // build navmesh
+    if (!sample->handleBuild())
+        return -3;
+    
+    // save to bin file
+    
+    
+    return 0;
+}
+
 int main(int /*argc*/, char** /*argv*/)
 {
 	// Init SDL
@@ -694,6 +731,7 @@ int main(int /*argc*/, char** /*argv*/)
 				string path = meshesFolder + "/" + meshName;
 				
 				geom = new InputGeom;
+//                std::string _path = "/Users/albertlaw/code/recastnavigation/RecastDemo/Bin/Meshes/Tile_+009_+008_L22.obj";
 				if (!geom->load(&ctx, path))
 				{
 					delete geom;
