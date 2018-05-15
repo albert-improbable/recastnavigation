@@ -16,6 +16,8 @@
 // 3. This notice may not be removed or altered from any source distribution.
 //
 
+#include <sstream>
+#include <sys/stat.h>
 #include <cstdio>
 #define _USE_MATH_DEFINES
 #include <cmath>
@@ -44,6 +46,12 @@
 #include "Sample_TempObstacles.h"
 #include "Sample_Debug.h"
 
+
+inline bool exists (const std::string& name) {
+    struct stat buffer;
+    return (stat (name.c_str(), &buffer) == 0);
+}
+
 #ifdef WIN32
 #	define snprintf _snprintf
 #	define putenv _putenv
@@ -69,23 +77,29 @@ static SampleItem g_samples[] =
 };
 static const int g_nsamples = sizeof(g_samples) / sizeof(SampleItem);
 
-int mainAlbert(int /*argc*/, char** /*argv*/)
+void loadAndSave(std::string& inDir,
+                 std::string& outDir,
+                 std::string& filename)
 {
+    // determine input file
+    std::string objPath;
+    objPath.append(inDir);
+    objPath.append("/");
+    objPath.append(filename);
+    if (!exists(objPath)) return;
+    
     BuildContext ctx;
     
     // init sample
     Sample* sample = g_samples[0].create();  // solo mesh
-    if (!sample)
-        return -1;
+    if (!sample) return;
     sample->setContext(&ctx);
-
+    
     // init geom
     InputGeom* geom = new InputGeom;
     
     // load obj file
-    std::string objPath = "/Users/albertlaw/code/recastnavigation/RecastDemo/Bin/Meshes/Tile_+009_+008_L22.obj";
-    if (!geom->load(&ctx, objPath))
-        return -2;
+    if (!geom->load(&ctx, objPath)) return;
     sample->handleMeshChanged(geom);
     
     // init build settings
@@ -97,19 +111,57 @@ int mainAlbert(int /*argc*/, char** /*argv*/)
     geom->saveGeomSet(&settings);
     
     // build navmesh
-    if (!sample->handleBuild())
-        return -3;
+    if (!sample->handleBuild()) return;
     
     // save to bin file
-    std::string binPath = "/Users/albertlaw/code/recastnavigation/RecastDemo/Bin/Tile_+009_+008_L22.obj.bin";
+    std::string binPath;
+    binPath.append(outDir);
+    binPath.append("/");
+    binPath.append(filename);
+    binPath.append(".bin");
+    //    std::string binPath = "/Users/albertlaw/code/recastnavigation/RecastDemo/Bin/Tile_+009_+008_L22.obj.bin";
     sample->saveAll(binPath.c_str(), sample->m_navMesh);
     
-    return 0;
+    // delete stuff
+    // TODO: delete stuff
+}
+
+std::string zeroPadNumber(int num, int width)
+{
+    std::stringstream ss;
+    
+    // the number is converted to string with the help of stringstream
+    ss << num;
+    string ret;
+    ss >> ret;
+    
+    // Append zero chars
+    int str_length = ret.length();
+    for (int i = 0; i < (width - str_length); i++)
+        ret = "0" + ret;
+    return ret;
+}
+
+void mainAlbert(int col, int row)
+{
+    std::string inDir = "/Users/albertlaw/Downloads/Muscat 100m OBJ/Data/L19";
+    std::string outDir = "/Users/albertlaw/code/recastnavigation/RecastDemo/Bin";
+    for (int c = 0; c <= col; c++) {
+        for (int r = 0; r <= row ; r++) {
+            std::string filename;
+            filename.append("Tile_+");
+            filename.append(zeroPadNumber(c, 3));
+            filename.append("_+");
+            filename.append(zeroPadNumber(r, 3));
+            filename.append("_L19.obj");
+            loadAndSave(inDir, outDir, filename);
+        }
+    }
 }
 
 int main(int /*argc*/, char** /*argv*/)
 {
-    mainAlbert(0, 0);
+    mainAlbert(18, 18);
     
 	// Init SDL
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
