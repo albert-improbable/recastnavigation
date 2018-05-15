@@ -83,8 +83,8 @@ int mainAlbert(int /*argc*/, char** /*argv*/)
     InputGeom* geom = new InputGeom;
     
     // load obj file
-    std::string path = "/Users/albertlaw/code/recastnavigation/RecastDemo/Bin/Meshes/Tile_+009_+008_L22.obj";
-    if (!geom->load(&ctx, path))
+    std::string objPath = "/Users/albertlaw/code/recastnavigation/RecastDemo/Bin/Meshes/Tile_+009_+008_L22.obj";
+    if (!geom->load(&ctx, objPath))
         return -2;
     sample->handleMeshChanged(geom);
     
@@ -101,13 +101,16 @@ int mainAlbert(int /*argc*/, char** /*argv*/)
         return -3;
     
     // save to bin file
-    
+    std::string binPath = "/Users/albertlaw/code/recastnavigation/RecastDemo/Bin/Tile_+009_+008_L22.obj.bin";
+    sample->saveAll(binPath.c_str(), sample->m_navMesh);
     
     return 0;
 }
 
 int main(int /*argc*/, char** /*argv*/)
 {
+    mainAlbert(0, 0);
+    
 	// Init SDL
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
 	{
