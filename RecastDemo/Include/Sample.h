@@ -100,7 +100,6 @@ class Sample
 {
 protected:
 	class InputGeom* m_geom;
-	class dtNavMesh* m_navMesh;
 	class dtNavMeshQuery* m_navQuery;
 	class dtCrowd* m_crowd;
 
@@ -131,9 +130,6 @@ protected:
 	BuildContext* m_ctx;
 
 	SampleDebugDraw m_dd;
-	
-	dtNavMesh* loadAll(const char* path);
-	void saveAll(const char* path, const dtNavMesh* mesh);
 
 public:
 	Sample();
@@ -179,6 +175,11 @@ public:
 
 	void resetCommonSettings();
 	void handleCommonSettings();
+    
+    void saveAll(const char* path, const dtNavMesh* mesh);
+    dtNavMesh* loadAll(const char* path);
+    
+    class dtNavMesh* m_navMesh;
 
 private:
 	// Explicitly disabled copy constructor and copy assignment operator.
