@@ -123,7 +123,8 @@ void loadAndSave(std::string& inDir,
     sample->saveAll(binPath.c_str(), sample->m_navMesh);
     
     // delete stuff
-    // TODO: delete stuff
+    delete sample;
+    delete geom;
 }
 
 std::string zeroPadNumber(int num, int width)
@@ -132,7 +133,7 @@ std::string zeroPadNumber(int num, int width)
     
     // the number is converted to string with the help of stringstream
     ss << num;
-    string ret;
+    std::string ret;
     ss >> ret;
     
     // Append zero chars
@@ -142,18 +143,25 @@ std::string zeroPadNumber(int num, int width)
     return ret;
 }
 
-void mainAlbert(int col, int row)
+std::string getFilename(int col, int row, int level) {
+    std::string filename;
+    filename.append("Tile_+");
+    filename.append(zeroPadNumber(col, 3));
+    filename.append("_+");
+    filename.append(zeroPadNumber(row, 3));
+    filename.append("_L");
+    filename.append(zeroPadNumber(level, 2));
+    filename.append(".obj");
+    return filename;
+}
+
+void mainAlbert(int cols, int rows)
 {
     std::string inDir = "/Users/albertlaw/Downloads/Muscat 100m OBJ/Data/L19";
     std::string outDir = "/Users/albertlaw/code/recastnavigation/RecastDemo/Bin";
-    for (int c = 0; c <= col; c++) {
-        for (int r = 0; r <= row ; r++) {
-            std::string filename;
-            filename.append("Tile_+");
-            filename.append(zeroPadNumber(c, 3));
-            filename.append("_+");
-            filename.append(zeroPadNumber(r, 3));
-            filename.append("_L19.obj");
+    for (int c = 0; c <= cols; c++) {
+        for (int r = 0; r <= rows; r++) {
+            std::string filename = getFilename(c, r, 19);
             loadAndSave(inDir, outDir, filename);
         }
     }
