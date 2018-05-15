@@ -119,7 +119,6 @@ void loadAndSave(std::string& inDir,
     binPath.append("/");
     binPath.append(filename);
     binPath.append(".bin");
-    //    std::string binPath = "/Users/albertlaw/code/recastnavigation/RecastDemo/Bin/Tile_+009_+008_L22.obj.bin";
     sample->saveAll(binPath.c_str(), sample->m_navMesh);
     
     // delete stuff
@@ -158,7 +157,7 @@ std::string getFilename(int col, int row, int level) {
 void mainAlbert(int cols, int rows)
 {
     std::string inDir = "/Users/albertlaw/Downloads/Muscat 100m OBJ/Data/L19";
-    std::string outDir = "/Users/albertlaw/code/recastnavigation/RecastDemo/Bin";
+    std::string outDir = "/Users/albertlaw/code/recastnavigation/RecastDemo/Bin/Tile";
     for (int c = 0; c <= cols; c++) {
         for (int r = 0; r <= rows; r++) {
             std::string filename = getFilename(c, r, 19);
