@@ -21,6 +21,7 @@
 #include <cstdio>
 #define _USE_MATH_DEFINES
 #include <cmath>
+#include <iostream>
 
 #include "SDL.h"
 #include "SDL_opengl.h"
@@ -91,7 +92,8 @@ void loadAndSave(std::string& inDir,
     BuildContext ctx;
     
     // init sample
-    Sample* sample = g_samples[0].create();  // solo mesh
+//    Sample* sample = g_samples[0].create();  // solo mesh
+    Sample* sample = g_samples[1].create();  // tile mesh
     if (!sample) return;
     sample->setContext(&ctx);
     
@@ -107,11 +109,17 @@ void loadAndSave(std::string& inDir,
     memset(&settings, 0, sizeof(settings));
     rcVcopy(settings.navMeshBMin, geom->getNavMeshBoundsMin());
     rcVcopy(settings.navMeshBMax, geom->getNavMeshBoundsMax());
+    // TODO: set agent characteristics
     sample->collectSettings(settings);
     geom->saveGeomSet(&settings);
     
     // build navmesh
-    if (!sample->handleBuild()) return;
+    std::cout << "building navmesh\n";
+    if (!sample->handleBuild()) {
+        std::cout << "failed building navmesh\n";
+        return;
+    }
+    std::cout << "done building navmesh\n";
     
     // save to bin file
     std::string binPath;
@@ -119,7 +127,9 @@ void loadAndSave(std::string& inDir,
     binPath.append("/");
     binPath.append(filename);
     binPath.append(".bin");
+    std::cout << "saving bin file\n";
     sample->saveAll(binPath.c_str(), sample->m_navMesh);
+    std::cout << "done saving bin file\n";
     
     // delete stuff
     delete sample;
@@ -166,9 +176,18 @@ void mainAlbert(int cols, int rows)
     }
 }
 
+void mainOneBigOne() {
+    std::string inDir = "/Users/albertlaw/Downloads/Muscat 100m OBJ/Data/L19";
+    std::string outDir = "/Users/albertlaw/code/recastnavigation/RecastDemo/Bin/Tile";
+    std::string filename = "L19.obj";
+    loadAndSave(inDir, outDir, filename);
+    std::cout << "exiting mainOneBigOne\n";
+}
+
 int main(int /*argc*/, char** /*argv*/)
 {
-    mainAlbert(18, 18);
+//    mainAlbert(18, 18);
+    mainOneBigOne();
     
 	// Init SDL
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
