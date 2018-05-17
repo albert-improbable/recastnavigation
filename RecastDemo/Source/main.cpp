@@ -109,7 +109,23 @@ void loadAndSave(std::string& inDir,
     memset(&settings, 0, sizeof(settings));
     rcVcopy(settings.navMeshBMin, geom->getNavMeshBoundsMin());
     rcVcopy(settings.navMeshBMax, geom->getNavMeshBoundsMax());
-    // TODO: set agent characteristics
+    // agent characteristics for a SOLDIER
+    settings.agentHeight = 2.0f;
+    settings.agentMaxClimb = 0.9f;
+    settings.agentMaxSlope = 45.0f;
+    settings.agentRadius = 0.4f;
+    settings.cellHeight = 0.2f;
+    settings.cellSize = 0.2f;
+    // default values taken from the GUI interface
+    settings.detailSampleDist = 6.0f;
+    settings.detailSampleMaxError = 1.0f;
+    settings.edgeMaxError = 1.3f;
+    settings.edgeMaxLen = 12.0f;
+    settings.vertsPerPoly = 6.0f;
+    settings.partitionType = SAMPLE_PARTITION_WATERSHED;
+    settings.regionMergeSize = 20.0f;
+    settings.regionMinSize = 8.0f;
+    settings.tileSize = 100.0f;
     sample->collectSettings(settings);
     geom->saveGeomSet(&settings);
     
