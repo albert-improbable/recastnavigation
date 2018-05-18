@@ -22,6 +22,8 @@
 #define _USE_MATH_DEFINES
 #include <cmath>
 #include <iostream>
+#include <fstream>
+#include <string>
 
 #include "SDL.h"
 #include "SDL_opengl.h"
@@ -78,6 +80,12 @@ static SampleItem g_samples[] =
 };
 static const int g_nsamples = sizeof(g_samples) / sizeof(SampleItem);
 
+long filesize(std::string filepath)
+{
+    std::ifstream in(filepath.c_str(), std::ifstream::ate | std::ifstream::binary);
+    return (long)in.tellg();
+}
+
 void loadAndSave(std::string& inDir,
                  std::string& outDir,
                  std::string& filename)
@@ -128,6 +136,7 @@ void loadAndSave(std::string& inDir,
     settings.tileSize = 100.0f;
     sample->collectSettings(settings);
     geom->saveGeomSet(&settings);
+    sample->handleSettings();
     
     // build navmesh
     std::cout << "building navmesh\n";
@@ -145,7 +154,7 @@ void loadAndSave(std::string& inDir,
     binPath.append(".bin");
     std::cout << "saving bin file\n";
     sample->saveAll(binPath.c_str(), sample->m_navMesh);
-    std::cout << "done saving bin file\n";
+    std::cout << "done saving bin file [" << binPath << "] (" << filesize(binPath) << ")\n";
     
     // delete stuff
     delete sample;
@@ -162,8 +171,8 @@ std::string zeroPadNumber(int num, int width)
     ss >> ret;
     
     // Append zero chars
-    int str_length = ret.length();
-    for (int i = 0; i < (width - str_length); i++)
+    unsigned long str_length = ret.length();
+    for (unsigned long i = 0; i < (width - str_length); i++)
         ret = "0" + ret;
     return ret;
 }
