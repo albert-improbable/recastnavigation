@@ -135,9 +135,9 @@ void loadAndSave(std::string& inDir,
     settings.regionMinSize = 8.0f;
     settings.tileSize = 100.0f;
     sample->collectSettings(settings);
-    geom->saveGeomSet(&settings);
     sample->handleSettings();
-    
+    geom->saveGeomSet(&settings);
+
     // build navmesh
     std::cout << "building navmesh\n";
     if (!sample->handleBuild()) {
@@ -155,6 +155,10 @@ void loadAndSave(std::string& inDir,
     std::cout << "saving bin file\n";
     sample->saveAll(binPath.c_str(), sample->m_navMesh);
     std::cout << "done saving bin file [" << binPath << "] (" << filesize(binPath) << ")\n";
+    
+    // use navmesh for pathfinding
+    dtNavMesh* navmesh = sample->getNavMesh();
+    
     
     // delete stuff
     delete sample;
@@ -212,7 +216,7 @@ void mainOneBigOne() {
 int main(int /*argc*/, char** /*argv*/)
 {
 //    mainAlbert(18, 18);
-    mainOneBigOne();
+//    mainOneBigOne();
     
 	// Init SDL
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
