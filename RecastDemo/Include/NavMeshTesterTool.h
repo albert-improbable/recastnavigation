@@ -23,6 +23,27 @@
 #include "DetourNavMesh.h"
 #include "DetourNavMeshQuery.h"
 
+namespace nsNavMeshTesterTool
+{
+    bool getSteerTarget(dtNavMeshQuery* navQuery, const float* startPos, const float* endPos,
+                        const float minTargetDist,
+                        const dtPolyRef* path, const int pathSize,
+                        float* steerPos, unsigned char& steerPosFlag, dtPolyRef& steerPosRef,
+                        float* outPoints, int* outPointCount);
+    
+    bool getSteerTarget(dtNavMeshQuery* navQuery, const float* startPos, const float* endPos,
+                        const float minTargetDist,
+                        const dtPolyRef* path, const int pathSize,
+                        float* steerPos, unsigned char& steerPosFlag, dtPolyRef& steerPosRef);
+
+    int fixupCorridor(dtPolyRef* path, const int npath, const int maxPath,
+                      const dtPolyRef* visited, const int nvisited);
+
+    int fixupShortcuts(dtPolyRef* path, int npath, dtNavMeshQuery* navQuery);
+
+    bool inRange(const float* v1, const float* v2, const float r, const float h);
+}
+
 class NavMeshTesterTool : public SampleTool
 {
 	Sample* m_sample;
