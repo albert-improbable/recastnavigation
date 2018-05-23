@@ -48,6 +48,9 @@
 #include "Sample_TileMesh.h"
 #include "Sample_TempObstacles.h"
 #include "Sample_Debug.h"
+#include "DetourNavMeshQuery.h"
+#include "DetourNavMesh.h"
+#include "DetourStatus.h"
 
 
 inline bool exists (const std::string& name) {
@@ -84,6 +87,34 @@ long filesize(std::string filepath)
 {
     std::ifstream in(filepath.c_str(), std::ifstream::ate | std::ifstream::binary);
     return (long)in.tellg();
+}
+
+void printStatusError(dtStatus status) {
+    if (dtStatusSucceed(status)) {
+        std::cout << "Success!";
+    } else if (dtStatusFailed(status)) {
+        if (dtStatusDetail(status, DT_WRONG_MAGIC)) {
+            std::cerr << "DT_WRONG_MAGIC\n";
+        } else if (dtStatusDetail(status, DT_WRONG_VERSION)) {
+            std::cerr << "DT_WRONG_VERSION\n";
+        } else if (dtStatusDetail(status, DT_OUT_OF_MEMORY)) {
+            std::cerr << "DT_OUT_OF_MEMORY\n";
+        } else if (dtStatusDetail(status, DT_INVALID_PARAM)) {
+            std::cerr << "DT_INVALID_PARAM\n";
+        } else if (dtStatusDetail(status, DT_BUFFER_TOO_SMALL)) {
+            std::cerr << "DT_BUFFER_TOO_SMALL\n";
+        } else if (dtStatusDetail(status, DT_OUT_OF_NODES)) {
+            std::cerr << "DT_OUT_OF_NODES\n";
+        } else if (dtStatusDetail(status, DT_PARTIAL_RESULT)) {
+            std::cerr << "DT_PARTIAL_RESULT\n";
+        } else if (dtStatusDetail(status, DT_ALREADY_OCCUPIED)) {
+            std::cerr << "DT_ALREADY_OCCUPIED\n";
+        } else {
+            std::cerr << "Unknown badness [" << status << "]\n";
+        }
+    } else {
+        std::cerr << "Unexpected status [" << status << "]\n";
+    }
 }
 
 void loadAndSave(std::string& inDir,
@@ -155,11 +186,49 @@ void loadAndSave(std::string& inDir,
     std::cout << "saving bin file\n";
     sample->saveAll(binPath.c_str(), sample->m_navMesh);
     std::cout << "done saving bin file [" << binPath << "] (" << filesize(binPath) << ")\n";
-    
+
+    ///////////////////////////////
     // use navmesh for pathfinding
-    dtNavMesh* navmesh = sample->getNavMesh();
+    dtNavMeshQuery* navmeshQuery = sample->getNavMeshQuery();
+
+    // initialize for a path finding query
+    float startPos[3] = {0.0f, 0.0f, 0.0f};
+    float endPos[3] = {100.0f, 0.0f, 0.0f};
+    const int maxPath = 1024;
+    dtPolyRef path[maxPath];
+    int pathCount;
     
+    // set movment filter
+    dtQueryFilter filter;
+    filter.setIncludeFlags(SAMPLE_POLYFLAGS_WALK | SAMPLE_POLYFLAGS_DOOR | SAMPLE_POLYFLAGS_JUMP);
+    filter.setAreaCost(SAMPLE_POLYAREA_GROUND, 1.0f);
+    filter.setAreaCost(SAMPLE_POLYAREA_WATER, 10.0f);
+    filter.setAreaCost(SAMPLE_POLYAREA_ROAD, 1.0f);
+    filter.setAreaCost(SAMPLE_POLYAREA_DOOR, 1.0f);
+    filter.setAreaCost(SAMPLE_POLYAREA_GRASS, 2.0f);
+    filter.setAreaCost(SAMPLE_POLYAREA_JUMP, 1.5f);
     
+    // determine starting/ending polygon
+    float halfExtents[3] = {0.1f, 0.1f, 0.1f};
+    dtPolyRef startRef = 0;
+    dtPolyRef endRef = 0;
+    float nearestPt[3];
+    navmeshQuery->findNearestPoly(startPos, halfExtents, &filter, &startRef, nearestPt);
+    navmeshQuery->findNearestPoly(endPos, halfExtents, &filter, &endRef, nearestPt);
+    
+    // find the path!
+    std::cout << "Finding path between [" << startPos[0] << ", " << startPos[1] << ", " << startPos[2] << "] (" << startRef <<") and [" << endPos[0] << ", " << endPos[1] << ", " << endPos[2] << "] (" << endRef << ").";
+    dtStatus status = navmeshQuery->findPath(startRef, endRef, startPos, endPos, &filter, path, &pathCount, maxPath);
+    if (!dtStatusSucceed(status)) {
+        printStatusError(status);
+    } else {
+        std::cout << "Path is...\n";
+        for (int i = 0; i < pathCount; i++) {
+            std::cout << path[i] << "\n";
+        }
+    }
+    
+    //////////////////////////
     // delete stuff
     delete sample;
     delete geom;
@@ -216,7 +285,7 @@ void mainOneBigOne() {
 int main(int /*argc*/, char** /*argv*/)
 {
 //    mainAlbert(18, 18);
-//    mainOneBigOne();
+    mainOneBigOne();
     
 	// Init SDL
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
