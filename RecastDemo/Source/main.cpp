@@ -85,6 +85,9 @@ static SampleItem g_samples[] =
 };
 static const int g_nsamples = sizeof(g_samples) / sizeof(SampleItem);
 
+const int MAX_PATH_LEN = 1024;
+const int MAX_SMOOTH_LEN = 4096;
+
 long filesize(std::string filepath)
 {
     std::ifstream in(filepath.c_str(), std::ifstream::ate | std::ifstream::binary);
@@ -237,10 +240,10 @@ void getSmoothPath() {
 }
 
 // copied from NavMeshTesterTool::recalc() "(m_toolMode == TOOLMODE_PATHFIND_FOLLOW)"
-static void calcSmoothPath(int MAX_SMOOTH, float *endPos, const dtQueryFilter &filter, int &m_nsmoothPath, float *m_smoothPath, int maxPath, dtNavMesh *navMesh, dtNavMeshQuery &navQuery, dtPolyRef *path, int pathCount, float *startPos, dtPolyRef startRef) {
+static void calcSmoothPath(float *endPos, const dtQueryFilter &filter, int &m_nsmoothPath, float *m_smoothPath, dtNavMesh *navMesh, dtNavMeshQuery &navQuery, dtPolyRef *path, int pathCount, float *startPos, dtPolyRef startRef) {
     {
         // Iterate over the path to find smooth path on the detail mesh surface.
-        dtPolyRef polys[maxPath];
+        dtPolyRef polys[MAX_PATH_LEN];
         memcpy(polys, path, sizeof(dtPolyRef)*pathCount);
         int npolys = pathCount;
         
@@ -256,7 +259,7 @@ static void calcSmoothPath(int MAX_SMOOTH, float *endPos, const dtQueryFilter &f
         
         // Move towards target a small advancement at a time until target reached or
         // when ran out of memory to store the path.
-        while (npolys && m_nsmoothPath < MAX_SMOOTH)
+        while (npolys && m_nsmoothPath < MAX_SMOOTH_LEN)
         {
             // Find location to steer towards.
             float steerPos[3];
@@ -289,7 +292,7 @@ static void calcSmoothPath(int MAX_SMOOTH, float *endPos, const dtQueryFilter &f
             navQuery.moveAlongSurface(polys[0], iterPos, moveTgt, &filter,
                                       result, visited, &nvisited, 16);
             
-            npolys = nsNavMeshTesterTool::fixupCorridor(polys, npolys, maxPath, visited, nvisited);
+            npolys = nsNavMeshTesterTool::fixupCorridor(polys, npolys, MAX_PATH_LEN, visited, nvisited);
             npolys = nsNavMeshTesterTool::fixupShortcuts(polys, npolys, &navQuery);
             
             float h = 0;
@@ -302,7 +305,7 @@ static void calcSmoothPath(int MAX_SMOOTH, float *endPos, const dtQueryFilter &f
             {
                 // Reached end of path.
                 dtVcopy(iterPos, targetPos);
-                if (m_nsmoothPath < MAX_SMOOTH)
+                if (m_nsmoothPath < MAX_SMOOTH_LEN)
                 {
                     dtVcopy(&m_smoothPath[m_nsmoothPath*3], iterPos);
                     m_nsmoothPath++;
@@ -331,7 +334,7 @@ static void calcSmoothPath(int MAX_SMOOTH, float *endPos, const dtQueryFilter &f
                 dtStatus _status = navMesh->getOffMeshConnectionPolyEndPoints(prevRef, polyRef, _startPos, _endPos);
                 if (dtStatusSucceed(_status))
                 {
-                    if (m_nsmoothPath < MAX_SMOOTH)
+                    if (m_nsmoothPath < MAX_SMOOTH_LEN)
                     {
                         dtVcopy(&m_smoothPath[m_nsmoothPath*3], _startPos);
                         m_nsmoothPath++;
@@ -351,10 +354,48 @@ static void calcSmoothPath(int MAX_SMOOTH, float *endPos, const dtQueryFilter &f
             }
             
             // Store results.
-            if (m_nsmoothPath < MAX_SMOOTH)
+            if (m_nsmoothPath < MAX_SMOOTH_LEN)
             {
                 dtVcopy(&m_smoothPath[m_nsmoothPath*3], iterPos);
                 m_nsmoothPath++;
+            }
+        }
+    }
+}
+
+static void getPath(float *startPos, float *endPos, const dtQueryFilter &filter, float *halfExtents,
+                    dtPolyRef *path, int &pathLen,
+                    int &m_nsmoothPath, float *m_smoothPath,
+                    dtNavMesh *navMesh, dtNavMeshQuery &navQuery)
+{
+    dtPolyRef startRef = getNearestPoly(startPos, halfExtents, &filter, &navQuery, navMesh);
+    dtPolyRef endRef = getNearestPoly(endPos, halfExtents, &filter, &navQuery, navMesh);
+    if ((0 < startRef) && (0 < endRef)) {
+        // find the path!
+        std::cout << "Finding path between " << toString(startPos) << " (" << startRef <<") and " << toString(endPos) << " (" << endRef << ").\n";
+        dtStatus status = navQuery.findPath(startRef, endRef, startPos, endPos, &filter, path, &pathLen, MAX_PATH_LEN);
+        if (!dtStatusSucceed(status)) {
+            std::cerr << "Failed to find a path.";
+            printStatusError(status);
+        } else {
+            // print the navmesh polygon path
+            std::cout << "Polygon path (" << pathLen << ") is...\n";
+            for (int i = 0; i < pathLen; i++) {
+                std::cout << i << ": " << path[i] << "\n";
+            }
+            if (path[pathLen - 1] != endRef) {
+                std::cerr << "End point not reachable!";
+            }
+            
+            // print the smooth path
+            calcSmoothPath(endPos, filter, m_nsmoothPath, m_smoothPath, navMesh, navQuery, path, pathLen, startPos, startRef);
+            if (0 >= m_nsmoothPath) {
+                std::cerr << "Unable to calculate smooth path.\n";
+            } else {
+                std::cout << "Point path (" << m_nsmoothPath << ") is...\n";
+                for (int i = 0; i < m_nsmoothPath; i++) {
+                    std::cout << i << ": " << toString(&m_smoothPath[i]) << "\n";
+                }
             }
         }
     }
@@ -371,14 +412,14 @@ void navmeshBinTestPaths(std::string binPath) {
     dtNavMeshQuery navQuery;
     navQuery.init(navMesh, 65535);
     
-    // initialize for a path finding query
-    float startPos[3] = {-315.5f, 99.0f, -48.1f};
-    float endPos[3] = {100.0f, 0.0f, 10.0f};
-    float halfExtents[3] = {0.1f, 0.1f, 0.1f};
-    const int maxPath = 1024;
-    dtPolyRef path[maxPath];
-    int pathCount;
+    // output variables
+    dtPolyRef path[MAX_PATH_LEN];
+    int pathLen = 0;
+    float smoothPath[MAX_SMOOTH_LEN*3];
+    int smoothPathLen = 0;
     
+    // initialize for a path finding query
+    float halfExtents[3] = {0.1f, 0.1f, 0.1f};
     // set movment filter
     dtQueryFilter filter;
     filter.setIncludeFlags(SAMPLE_POLYFLAGS_WALK | SAMPLE_POLYFLAGS_DOOR | SAMPLE_POLYFLAGS_JUMP);
@@ -390,40 +431,12 @@ void navmeshBinTestPaths(std::string binPath) {
     filter.setAreaCost(SAMPLE_POLYAREA_JUMP, 1.5f);
     
     // determine starting/ending polygon
-    dtPolyRef startRef = getNearestPoly(startPos, halfExtents, &filter, &navQuery, navMesh);
-    dtPolyRef endRef = getNearestPoly(endPos, halfExtents, &filter, &navQuery, navMesh);
-    if ((0 < startRef) && (0 < endRef)) {
-        // find the path!
-        std::cout << "Finding path between " << toString(startPos) << " (" << startRef <<") and " << toString(endPos) << " (" << endRef << ").\n";
-        dtStatus status = navQuery.findPath(startRef, endRef, startPos, endPos, &filter, path, &pathCount, maxPath);
-        if (!dtStatusSucceed(status)) {
-            std::cerr << "Failed to find a path.";
-            printStatusError(status);
-        } else {
-            // print the navmesh polygon path
-            std::cout << "Polygon path (" << pathCount << ") is...\n";
-            for (int i = 0; i < pathCount; i++) {
-                std::cout << i << ": " << path[i] << "\n";
-            }
-            if (path[pathCount - 1] != endRef) {
-                std::cerr << "End point not reachable!";
-            }
-            
-            // print the smooth path
-            const int MAX_SMOOTH = 4096;
-            int m_nsmoothPath = 0;
-            float m_smoothPath[MAX_SMOOTH*3];
-            calcSmoothPath(MAX_SMOOTH, endPos, filter, m_nsmoothPath, m_smoothPath, maxPath, navMesh, navQuery, path, pathCount, startPos, startRef);
-            if (0 >= m_nsmoothPath) {
-                std::cerr << "Unable to calculate smooth path.\n";
-            } else {
-                std::cout << "Point path (" << m_nsmoothPath << ") is...\n";
-                for (int i = 0; i < m_nsmoothPath; i++) {
-                    std::cout << i << ": " << toString(&m_smoothPath[i]) << "\n";
-                }
-            }
-        }
-    }
+    float startPos[3] = {-315.5f, 99.0f, -48.1f};
+    float endPos[3] = {100.0f, 0.0f, 10.0f};
+    getPath(startPos, endPos, filter, halfExtents,
+            path, pathLen,
+            smoothPathLen, smoothPath,
+            navMesh, navQuery);
     
     // delete stuff
     delete sample;
