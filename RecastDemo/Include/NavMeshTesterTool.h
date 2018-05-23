@@ -25,6 +25,8 @@
 
 namespace nsNavMeshTesterTool
 {
+    float frand();
+    
     bool getSteerTarget(dtNavMeshQuery* navQuery, const float* startPos, const float* endPos,
                         const float minTargetDist,
                         const dtPolyRef* path, const int pathSize,

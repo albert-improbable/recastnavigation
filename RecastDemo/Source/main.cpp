@@ -87,6 +87,7 @@ static const int g_nsamples = sizeof(g_samples) / sizeof(SampleItem);
 
 const int MAX_PATH_LEN = 1024;
 const int MAX_SMOOTH_LEN = 4096;
+const float ZERO_POS[3] = {0.0f, 0.0f, 0.0f};
 
 long filesize(std::string filepath)
 {
@@ -215,7 +216,8 @@ dtPolyRef getNearestPoly(const float* pos,
                          const float* halfExtents,
                          const dtQueryFilter* filter,
                          const dtNavMeshQuery* navmeshQuery,
-                         const dtNavMesh* navmesh)
+                         const dtNavMesh* navmesh,
+                         bool verbose = false)
 {
     float nearestPt[3];
     dtPolyRef polyRef = -666;
@@ -231,7 +233,9 @@ dtPolyRef getNearestPoly(const float* pos,
         return -2;
     }
     
-    std::cerr << "Valid poly ref [" << polyRef <<"] found for " << toString(pos) << "\n";
+    if (verbose) {
+        std::cout << "Valid poly ref [" << polyRef <<"] found for " << toString(pos) << "\n";
+    }
     return polyRef;
 }
 
@@ -365,7 +369,7 @@ static void calcSmoothPath(float *endPos, const dtQueryFilter &filter, int &m_ns
 
 static void getPath(float *startPos, float *endPos, const dtQueryFilter &filter, float *halfExtents,
                     dtPolyRef *path, int &pathLen,
-                    int &m_nsmoothPath, float *m_smoothPath,
+                    float *m_smoothPath, int &m_nsmoothPath,
                     dtNavMesh *navMesh, dtNavMeshQuery &navQuery)
 {
     dtPolyRef startRef = getNearestPoly(startPos, halfExtents, &filter, &navQuery, navMesh);
@@ -378,27 +382,44 @@ static void getPath(float *startPos, float *endPos, const dtQueryFilter &filter,
             std::cerr << "Failed to find a path.";
             printStatusError(status);
         } else {
-            // print the navmesh polygon path
-            std::cout << "Polygon path (" << pathLen << ") is...\n";
-            for (int i = 0; i < pathLen; i++) {
-                std::cout << i << ": " << path[i] << "\n";
-            }
-            if (path[pathLen - 1] != endRef) {
-                std::cerr << "End point not reachable!";
-            }
-            
-            // print the smooth path
             calcSmoothPath(endPos, filter, m_nsmoothPath, m_smoothPath, navMesh, navQuery, path, pathLen, startPos, startRef);
             if (0 >= m_nsmoothPath) {
                 std::cerr << "Unable to calculate smooth path.\n";
-            } else {
-                std::cout << "Point path (" << m_nsmoothPath << ") is...\n";
-                for (int i = 0; i < m_nsmoothPath; i++) {
-                    std::cout << i << ": " << toString(&m_smoothPath[i]) << "\n";
-                }
             }
         }
     }
+}
+
+void printPolygonPath(dtPolyRef *path, int &pathLen, bool verbose = true) {
+    std::cout << "Polygon path (" << pathLen << ") is...\n";
+    if (verbose) {
+        for (int i = 0; i < pathLen; i++) {
+            std::cout << i << ": " << path[i] << "\n";
+        }
+    }
+}
+
+void printSmoothedPath(float *m_smoothPath, int &m_nsmoothPath, bool verbose = true) {
+    std::cout << "Point path (" << m_nsmoothPath << ") is...\n";
+    if (verbose) {
+        for (int i = 0; i < m_nsmoothPath; i++) {
+            std::cout << i << ": " << toString(&m_smoothPath[i]) << "\n";
+        }
+    }
+}
+
+bool findRandomPoint(const dtQueryFilter &filter, const dtNavMeshQuery &navQuery, float *randomPt)
+{
+    dtPolyRef randomRef;
+    for (int i = 0; i < 100; i++) {
+        dtStatus status = navQuery.findRandomPoint(&filter, nsNavMeshTesterTool::frand, &randomRef, randomPt);
+        if (dtStatusSucceed(status)) {
+            return true;
+        }
+    }
+    
+    dtVcopy(randomPt, ZERO_POS);
+    return false;
 }
 
 void navmeshBinTestPaths(std::string binPath) {
@@ -433,10 +454,30 @@ void navmeshBinTestPaths(std::string binPath) {
     // determine starting/ending polygon
     float startPos[3] = {-315.5f, 99.0f, -48.1f};
     float endPos[3] = {100.0f, 0.0f, 10.0f};
+    
     getPath(startPos, endPos, filter, halfExtents,
             path, pathLen,
-            smoothPathLen, smoothPath,
+            smoothPath, smoothPathLen,
             navMesh, navQuery);
+    printPolygonPath(path, pathLen, false);
+    printSmoothedPath(smoothPath, smoothPathLen, false);
+    
+    // run a bunch of random points
+    int outerCount = 1;
+    while (outerCount <= 1000) {
+        if (findRandomPoint(filter, navQuery, startPos) && findRandomPoint(filter, navQuery, endPos)) {
+            std::cout << "[" << outerCount << "] \n";
+            getPath(startPos, endPos, filter, halfExtents,
+                    path, pathLen,
+                    smoothPath, smoothPathLen,
+                    navMesh, navQuery);
+            printPolygonPath(path, pathLen, false);
+            printSmoothedPath(smoothPath, smoothPathLen, false);
+            outerCount++;
+        } else {
+            std::cerr << outerCount << ": Failed to find valid random points.\n";
+        }
+    }
     
     // delete stuff
     delete sample;

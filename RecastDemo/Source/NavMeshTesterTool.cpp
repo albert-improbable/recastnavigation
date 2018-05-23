@@ -45,16 +45,16 @@
 // Uncomment this to dump all the requests in stdout.
 #define DUMP_REQS
 
+namespace nsNavMeshTesterTool
+{
+
 // Returns a random number [0..1]
-static float frand()
+float frand()
 {
 //	return ((float)(rand() & 0xffff)/(float)0xffff);
 	return (float)rand()/(float)RAND_MAX;
 }
 
-namespace nsNavMeshTesterTool
-{
-    
 bool inRange(const float* v1, const float* v2, const float r, const float h)
 {
 	const float dx = v2[0] - v1[0];
@@ -361,7 +361,7 @@ void NavMeshTesterTool::handleMenu()
 	
 	if (imguiButton("Set Random Start"))
 	{
-		dtStatus status = m_navQuery->findRandomPoint(&m_filter, frand, &m_startRef, m_spos);
+        dtStatus status = m_navQuery->findRandomPoint(&m_filter, nsNavMeshTesterTool::frand, &m_startRef, m_spos);
 		if (dtStatusSucceed(status))
 		{
 			m_sposSet = true;
@@ -372,7 +372,7 @@ void NavMeshTesterTool::handleMenu()
 	{
 		if (m_sposSet)
 		{
-			dtStatus status = m_navQuery->findRandomPointAroundCircle(m_startRef, m_spos, m_randomRadius, &m_filter, frand, &m_endRef, m_epos);
+            dtStatus status = m_navQuery->findRandomPointAroundCircle(m_startRef, m_spos, m_randomRadius, &m_filter, nsNavMeshTesterTool::frand, &m_endRef, m_epos);
 			if (dtStatusSucceed(status))
 			{
 				m_eposSet = true;
@@ -391,7 +391,7 @@ void NavMeshTesterTool::handleMenu()
 		{
 			float pt[3];
 			dtPolyRef ref;
-			dtStatus status = m_navQuery->findRandomPoint(&m_filter, frand, &ref, pt);
+            dtStatus status = m_navQuery->findRandomPoint(&m_filter, nsNavMeshTesterTool::frand, &ref, pt);
 			if (dtStatusSucceed(status))
 			{
 				dtVcopy(&m_randPoints[m_nrandPoints*3], pt);
@@ -409,7 +409,7 @@ void NavMeshTesterTool::handleMenu()
 			{
 				float pt[3];
 				dtPolyRef ref;
-				dtStatus status = m_navQuery->findRandomPointAroundCircle(m_startRef, m_spos, m_randomRadius, &m_filter, frand, &ref, pt);
+                dtStatus status = m_navQuery->findRandomPointAroundCircle(m_startRef, m_spos, m_randomRadius, &m_filter, nsNavMeshTesterTool::frand, &ref, pt);
 				if (dtStatusSucceed(status))
 				{
 					dtVcopy(&m_randPoints[m_nrandPoints*3], pt);
