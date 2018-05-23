@@ -89,58 +89,20 @@ long filesize(std::string filepath)
     return (long)in.tellg();
 }
 
-void printStatusError(dtStatus status) {
-    if (dtStatusSucceed(status)) {
-        std::cout << "Success!";
-    } else if (dtStatusFailed(status)) {
-        if (dtStatusDetail(status, DT_WRONG_MAGIC)) {
-            std::cerr << "DT_WRONG_MAGIC\n";
-        } else if (dtStatusDetail(status, DT_WRONG_VERSION)) {
-            std::cerr << "DT_WRONG_VERSION\n";
-        } else if (dtStatusDetail(status, DT_OUT_OF_MEMORY)) {
-            std::cerr << "DT_OUT_OF_MEMORY\n";
-        } else if (dtStatusDetail(status, DT_INVALID_PARAM)) {
-            std::cerr << "DT_INVALID_PARAM\n";
-        } else if (dtStatusDetail(status, DT_BUFFER_TOO_SMALL)) {
-            std::cerr << "DT_BUFFER_TOO_SMALL\n";
-        } else if (dtStatusDetail(status, DT_OUT_OF_NODES)) {
-            std::cerr << "DT_OUT_OF_NODES\n";
-        } else if (dtStatusDetail(status, DT_PARTIAL_RESULT)) {
-            std::cerr << "DT_PARTIAL_RESULT\n";
-        } else if (dtStatusDetail(status, DT_ALREADY_OCCUPIED)) {
-            std::cerr << "DT_ALREADY_OCCUPIED\n";
-        } else {
-            std::cerr << "Unknown badness [" << status << "]\n";
+std::string toString(const float* pos, int len = 3) {
+    std::ostringstream ss;
+    ss << "[";
+    for (int i = 0; i < len; i++) {
+        if (0 != i) {
+            ss << ", ";
         }
-    } else {
-        std::cerr << "Unexpected status [" << status << "]\n";
+        ss << pos[i];
     }
+    ss << "]";
+    return ss.str();
 }
 
-dtPolyRef getNearestPoly(const float* pos,
-                         const float* halfExtents,
-                         const dtQueryFilter* filter,
-                         const dtNavMeshQuery* navmeshQuery,
-                         const dtNavMesh* navmesh)
-{
-    float nearestPt[3];
-    dtPolyRef polyRef;
-    
-    dtStatus status = navmeshQuery->findNearestPoly(pos, halfExtents, filter, &polyRef, nearestPt);
-    if (!dtStatusSucceed(status)) {
-        std::cerr << "navmeshQuery->findNearestPoly([" << pos[0] << ", " << pos[1] << ", " << pos[2] << "], halfExtents, filter, &polyRef, nearestPt)\n";
-        printStatusError(status);
-        return -1;
-    }
-    if (!navmesh->isValidPolyRef(polyRef)) {
-        std::cerr << "Invalid poly ref [" << polyRef <<"] found for [" << pos[0] << ", " << pos[1] << ", " << pos[2] << "]\n";
-        return -2;
-    }
-
-    return polyRef;
-}
-
-void loadAndSave(std::string& inDir,
+void objToNavmeshBin(std::string& inDir,
                  std::string& outDir,
                  std::string& filename)
 {
@@ -165,6 +127,7 @@ void loadAndSave(std::string& inDir,
     // load obj file
     if (!geom->load(&ctx, objPath)) return;
     sample->handleMeshChanged(geom);
+    std::cout << "obj file loaded " << toString(geom->getMeshBoundsMin()) << " to " << toString(geom->getNavMeshBoundsMax()) << "] \n";
     
     // init build settings
     BuildSettings settings;
@@ -209,15 +172,79 @@ void loadAndSave(std::string& inDir,
     std::cout << "saving bin file\n";
     sample->saveAll(binPath.c_str(), sample->m_navMesh);
     std::cout << "done saving bin file [" << binPath << "] (" << filesize(binPath) << ")\n";
+    
+    // delete stuff
+    delete sample;
+    delete geom;
+}
 
-    ///////////////////////////////
+void printStatusError(dtStatus status) {
+    if (dtStatusSucceed(status)) {
+        std::cout << "Success!";
+    } else if (dtStatusFailed(status)) {
+        if (dtStatusDetail(status, DT_WRONG_MAGIC)) {
+            std::cerr << "DT_WRONG_MAGIC\n";
+        } else if (dtStatusDetail(status, DT_WRONG_VERSION)) {
+            std::cerr << "DT_WRONG_VERSION\n";
+        } else if (dtStatusDetail(status, DT_OUT_OF_MEMORY)) {
+            std::cerr << "DT_OUT_OF_MEMORY\n";
+        } else if (dtStatusDetail(status, DT_INVALID_PARAM)) {
+            std::cerr << "DT_INVALID_PARAM\n";
+        } else if (dtStatusDetail(status, DT_BUFFER_TOO_SMALL)) {
+            std::cerr << "DT_BUFFER_TOO_SMALL\n";
+        } else if (dtStatusDetail(status, DT_OUT_OF_NODES)) {
+            std::cerr << "DT_OUT_OF_NODES\n";
+        } else if (dtStatusDetail(status, DT_PARTIAL_RESULT)) {
+            std::cerr << "DT_PARTIAL_RESULT\n";
+        } else if (dtStatusDetail(status, DT_ALREADY_OCCUPIED)) {
+            std::cerr << "DT_ALREADY_OCCUPIED\n";
+        } else {
+            std::cerr << "Unknown badness [" << status << "]\n";
+        }
+    } else {
+        std::cerr << "Unexpected status [" << status << "]\n";
+    }
+}
+
+dtPolyRef getNearestPoly(const float* pos,
+                         const float* halfExtents,
+                         const dtQueryFilter* filter,
+                         const dtNavMeshQuery* navmeshQuery,
+                         const dtNavMesh* navmesh)
+{
+    float nearestPt[3];
+    dtPolyRef polyRef = -666;
+    
+    dtStatus status = navmeshQuery->findNearestPoly(pos, halfExtents, filter, &polyRef, nearestPt);
+    if (!dtStatusSucceed(status)) {
+        std::cerr << "navmeshQuery->findNearestPoly(" << toString(pos) << ", halfExtents, filter, &polyRef, nearestPt)\n";
+        printStatusError(status);
+        return -1;
+    }
+    if (!navmesh->isValidPolyRef(polyRef)) {
+        std::cerr << "Invalid poly ref [" << polyRef <<"] found for " << toString(pos) << "\n";
+        return -2;
+    }
+    
+    std::cerr << "Valid poly ref [" << polyRef <<"] found for " << toString(pos) << "\n";
+    return polyRef;
+}
+
+void navmeshBinTestPaths(std::string binPath) {
+    Sample* sample = g_samples[1].create();  // tile mesh
+    if (!sample) return;
+    
+    // load navmesh bin file
+    dtNavMesh* navmesh = sample->loadAll(binPath.c_str());
+    
     // use navmesh for pathfinding
-    dtNavMesh* navmesh = sample->getNavMesh();
-    dtNavMeshQuery* navmeshQuery = sample->getNavMeshQuery();
-
+    dtNavMeshQuery navmeshQuery;
+    navmeshQuery.init(navmesh, 65535);
+    
     // initialize for a path finding query
-    float startPos[3] = {-100.0f, 0.0f, 0.0f};
-    float endPos[3] = {100.0f, 0.0f, 0.0f};
+    float startPos[3] = {-315.5f, 99.0f, -48.1f};
+    float endPos[3] = {100.0f, 0.0f, 10.0f};
+    float halfExtents[3] = {0.1f, 0.1f, 0.1f};
     const int maxPath = 1024;
     dtPolyRef path[maxPath];
     int pathCount;
@@ -233,27 +260,24 @@ void loadAndSave(std::string& inDir,
     filter.setAreaCost(SAMPLE_POLYAREA_JUMP, 1.5f);
     
     // determine starting/ending polygon
-    float halfExtents[3] = {0.1f, 0.1f, 0.1f};
-    dtPolyRef startRef = getNearestPoly(startPos, halfExtents, &filter, navmeshQuery, navmesh);
-    dtPolyRef endRef = getNearestPoly(endPos, halfExtents, &filter, navmeshQuery, navmesh);
+    dtPolyRef startRef = getNearestPoly(startPos, halfExtents, &filter, &navmeshQuery, navmesh);
+    dtPolyRef endRef = getNearestPoly(endPos, halfExtents, &filter, &navmeshQuery, navmesh);
     if ((0 < startRef) && (0 < endRef)) {
         // find the path!
-        std::cout << "Finding path between [" << startPos[0] << ", " << startPos[1] << ", " << startPos[2] << "] (" << startRef <<") and [" << endPos[0] << ", " << endPos[1] << ", " << endPos[2] << "] (" << endRef << ").\n";
-        dtStatus status = navmeshQuery->findPath(startRef, endRef, startPos, endPos, &filter, path, &pathCount, maxPath);
+        std::cout << "Finding path between " << toString(startPos) << " (" << startRef <<") and " << toString(endPos) << " (" << endRef << ").\n";
+        dtStatus status = navmeshQuery.findPath(startRef, endRef, startPos, endPos, &filter, path, &pathCount, maxPath);
         if (!dtStatusSucceed(status)) {
             printStatusError(status);
         } else {
-            std::cout << "Path is...\n";
+            std::cout << "Path (" << pathCount << ") is...\n";
             for (int i = 0; i < pathCount; i++) {
-                std::cout << path[i] << "\n";
+                std::cout << i << ": " << path[i] << "\n";
             }
         }
     }
     
-    //////////////////////////
     // delete stuff
     delete sample;
-    delete geom;
 }
 
 std::string zeroPadNumber(int num, int width)
@@ -291,7 +315,7 @@ void mainAlbert(int cols, int rows)
     for (int c = 0; c <= cols; c++) {
         for (int r = 0; r <= rows; r++) {
             std::string filename = getFilename(c, r, 19);
-            loadAndSave(inDir, outDir, filename);
+            objToNavmeshBin(inDir, outDir, filename);
         }
     }
 }
@@ -299,8 +323,10 @@ void mainAlbert(int cols, int rows)
 void mainOneBigOne() {
     std::string inDir = "/Users/albertlaw/Downloads/Muscat 100m OBJ/Data/L19";
     std::string outDir = "/Users/albertlaw/code/recastnavigation/RecastDemo/Bin/Tile";
-    std::string filename = "L19.obj";
-    loadAndSave(inDir, outDir, filename);
+    std::string objFilename = "L19.obj";
+    std::string binFilename = "L19.obj.bin";
+//    objToNavmeshBin(inDir, outDir, objFilename);
+    navmeshBinTestPaths(outDir + "/" + binFilename);
     std::cout << "exiting mainOneBigOne\n";
 }
 
