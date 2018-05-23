@@ -117,6 +117,29 @@ void printStatusError(dtStatus status) {
     }
 }
 
+dtPolyRef getNearestPoly(const float* pos,
+                         const float* halfExtents,
+                         const dtQueryFilter* filter,
+                         const dtNavMeshQuery* navmeshQuery,
+                         const dtNavMesh* navmesh)
+{
+    float nearestPt[3];
+    dtPolyRef polyRef;
+    
+    dtStatus status = navmeshQuery->findNearestPoly(pos, halfExtents, filter, &polyRef, nearestPt);
+    if (!dtStatusSucceed(status)) {
+        std::cerr << "navmeshQuery->findNearestPoly([" << pos[0] << ", " << pos[1] << ", " << pos[2] << "], halfExtents, filter, &polyRef, nearestPt)\n";
+        printStatusError(status);
+        return -1;
+    }
+    if (!navmesh->isValidPolyRef(polyRef)) {
+        std::cerr << "Invalid poly ref [" << polyRef <<"] found for [" << pos[0] << ", " << pos[1] << ", " << pos[2] << "]\n";
+        return -2;
+    }
+
+    return polyRef;
+}
+
 void loadAndSave(std::string& inDir,
                  std::string& outDir,
                  std::string& filename)
@@ -189,10 +212,11 @@ void loadAndSave(std::string& inDir,
 
     ///////////////////////////////
     // use navmesh for pathfinding
+    dtNavMesh* navmesh = sample->getNavMesh();
     dtNavMeshQuery* navmeshQuery = sample->getNavMeshQuery();
 
     // initialize for a path finding query
-    float startPos[3] = {0.0f, 0.0f, 0.0f};
+    float startPos[3] = {-100.0f, 0.0f, 0.0f};
     float endPos[3] = {100.0f, 0.0f, 0.0f};
     const int maxPath = 1024;
     dtPolyRef path[maxPath];
@@ -210,21 +234,19 @@ void loadAndSave(std::string& inDir,
     
     // determine starting/ending polygon
     float halfExtents[3] = {0.1f, 0.1f, 0.1f};
-    dtPolyRef startRef = 0;
-    dtPolyRef endRef = 0;
-    float nearestPt[3];
-    navmeshQuery->findNearestPoly(startPos, halfExtents, &filter, &startRef, nearestPt);
-    navmeshQuery->findNearestPoly(endPos, halfExtents, &filter, &endRef, nearestPt);
-    
-    // find the path!
-    std::cout << "Finding path between [" << startPos[0] << ", " << startPos[1] << ", " << startPos[2] << "] (" << startRef <<") and [" << endPos[0] << ", " << endPos[1] << ", " << endPos[2] << "] (" << endRef << ").";
-    dtStatus status = navmeshQuery->findPath(startRef, endRef, startPos, endPos, &filter, path, &pathCount, maxPath);
-    if (!dtStatusSucceed(status)) {
-        printStatusError(status);
-    } else {
-        std::cout << "Path is...\n";
-        for (int i = 0; i < pathCount; i++) {
-            std::cout << path[i] << "\n";
+    dtPolyRef startRef = getNearestPoly(startPos, halfExtents, &filter, navmeshQuery, navmesh);
+    dtPolyRef endRef = getNearestPoly(endPos, halfExtents, &filter, navmeshQuery, navmesh);
+    if ((0 < startRef) && (0 < endRef)) {
+        // find the path!
+        std::cout << "Finding path between [" << startPos[0] << ", " << startPos[1] << ", " << startPos[2] << "] (" << startRef <<") and [" << endPos[0] << ", " << endPos[1] << ", " << endPos[2] << "] (" << endRef << ").\n";
+        dtStatus status = navmeshQuery->findPath(startRef, endRef, startPos, endPos, &filter, path, &pathCount, maxPath);
+        if (!dtStatusSucceed(status)) {
+            printStatusError(status);
+        } else {
+            std::cout << "Path is...\n";
+            for (int i = 0; i < pathCount; i++) {
+                std::cout << path[i] << "\n";
+            }
         }
     }
     
