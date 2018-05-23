@@ -244,7 +244,7 @@ void getSmoothPath() {
 }
 
 // copied from NavMeshTesterTool::recalc() "(m_toolMode == TOOLMODE_PATHFIND_FOLLOW)"
-static void calcSmoothPath(float *endPos, const dtQueryFilter &filter, int &m_nsmoothPath, float *m_smoothPath, dtNavMesh *navMesh, dtNavMeshQuery &navQuery, dtPolyRef *path, int pathCount, float *startPos, dtPolyRef startRef) {
+void calcSmoothPath(float *endPos, const dtQueryFilter &filter, int &m_nsmoothPath, float *m_smoothPath, dtNavMesh *navMesh, dtNavMeshQuery &navQuery, dtPolyRef *path, int pathCount, float *startPos, dtPolyRef startRef) {
     {
         // Iterate over the path to find smooth path on the detail mesh surface.
         dtPolyRef polys[MAX_PATH_LEN];
