@@ -456,6 +456,7 @@ void navmeshBinTestPaths(std::string binPath) {
     float startPos[3] = {-315.5f, 99.0f, -48.1f};
     float endPos[3] = {100.0f, 0.0f, 10.0f};
     
+    // execute non-random one
     getPath(startPos, endPos, filter, halfExtents,
             path, pathLen,
             smoothPath, smoothPathLen,
