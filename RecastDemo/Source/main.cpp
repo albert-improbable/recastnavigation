@@ -530,7 +530,7 @@ void mainOneBigOne() {
     std::string outDir = "/Users/albertlaw/code/recastnavigation/RecastDemo/Bin/Tile";
     std::string objFilename = "L19.obj";
     std::string binFilename = "L19.obj.bin";
-//    objToNavmeshBin(inDir, outDir, objFilename);
+    objToNavmeshBin(inDir, outDir, objFilename);
     navmeshBinTestPaths(outDir + "/" + binFilename);
     std::cout << "exiting mainOneBigOne\n";
 }
