@@ -132,7 +132,7 @@ void objToNavmeshBin(std::string& inDir,
     // load obj file
     if (!geom->load(&ctx, objPath)) return;
     sample->handleMeshChanged(geom);
-    std::cout << "obj file loaded " << toString(geom->getMeshBoundsMin()) << " to " << toString(geom->getNavMeshBoundsMax()) << "] \n";
+    std::cout << "obj file loaded " << toString(geom->getMeshBoundsMin()) << " to " << toString(geom->getNavMeshBoundsMax()) << "\n";
     
     // init build settings
     BuildSettings settings;
