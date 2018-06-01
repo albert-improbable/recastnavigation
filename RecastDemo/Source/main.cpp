@@ -180,12 +180,11 @@ void objToNavmeshBin(std::string& inDir,
             if (minNavMesh[0] > tile->header->bmin[0]) minNavMesh[0] = tile->header->bmin[0];
             if (minNavMesh[1] > tile->header->bmin[1]) minNavMesh[1] = tile->header->bmin[1];
             if (minNavMesh[2] > tile->header->bmin[2]) minNavMesh[2] = tile->header->bmin[2];
-            if (maxNavMesh[0] > tile->header->bmax[0]) maxNavMesh[0] = tile->header->bmax[0];
-            if (maxNavMesh[1] > tile->header->bmax[1]) maxNavMesh[1] = tile->header->bmax[1];
-            if (maxNavMesh[2] > tile->header->bmax[2]) maxNavMesh[2] = tile->header->bmax[2];
+            if (maxNavMesh[0] < tile->header->bmax[0]) maxNavMesh[0] = tile->header->bmax[0];
+            if (maxNavMesh[1] < tile->header->bmax[1]) maxNavMesh[1] = tile->header->bmax[1];
+            if (maxNavMesh[2] < tile->header->bmax[2]) maxNavMesh[2] = tile->header->bmax[2];
         }
     }
-    std::cout << 
     
     
     // save to bin file
