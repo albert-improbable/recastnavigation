@@ -107,6 +107,22 @@ std::string toString(const float* pos, int len = 3) {
     return ss.str();
 }
 
+static void testNavMesh(const dtNavMesh *navMesh) {
+    float minNavMesh[3]={99999, 99999, 99999};
+    float maxNavMesh[3]={-99999, -99999, -99999};
+    for (int i = 0; i < navMesh->getMaxTiles(); i++) {
+        const dtMeshTile* tile = navMesh->getTile(i);
+        if ((NULL != tile) && (0 < tile->dataSize)) {
+            if (minNavMesh[0] > tile->header->bmin[0]) minNavMesh[0] = tile->header->bmin[0];
+            if (minNavMesh[1] > tile->header->bmin[1]) minNavMesh[1] = tile->header->bmin[1];
+            if (minNavMesh[2] > tile->header->bmin[2]) minNavMesh[2] = tile->header->bmin[2];
+            if (maxNavMesh[0] < tile->header->bmax[0]) maxNavMesh[0] = tile->header->bmax[0];
+            if (maxNavMesh[1] < tile->header->bmax[1]) maxNavMesh[1] = tile->header->bmax[1];
+            if (maxNavMesh[2] < tile->header->bmax[2]) maxNavMesh[2] = tile->header->bmax[2];
+        }
+    }
+}
+
 void objToNavmeshBin(std::string& inDir,
                  std::string& outDir,
                  std::string& filename)
@@ -172,20 +188,7 @@ void objToNavmeshBin(std::string& inDir,
     const float* minMesh = geom->getMeshBoundsMin();
     const float* maxMesh = geom->getNavMeshBoundsMax();
     const dtNavMesh* navMesh = sample->getNavMesh();
-    float minNavMesh[3]={99999, 99999, 99999};
-    float maxNavMesh[3]={-99999, -99999, -99999};
-    for (int i = 0; i < navMesh->getMaxTiles(); i++) {
-        const dtMeshTile* tile = navMesh->getTile(i);
-        if ((NULL != tile) && (0 < tile->dataSize)) {
-            if (minNavMesh[0] > tile->header->bmin[0]) minNavMesh[0] = tile->header->bmin[0];
-            if (minNavMesh[1] > tile->header->bmin[1]) minNavMesh[1] = tile->header->bmin[1];
-            if (minNavMesh[2] > tile->header->bmin[2]) minNavMesh[2] = tile->header->bmin[2];
-            if (maxNavMesh[0] < tile->header->bmax[0]) maxNavMesh[0] = tile->header->bmax[0];
-            if (maxNavMesh[1] < tile->header->bmax[1]) maxNavMesh[1] = tile->header->bmax[1];
-            if (maxNavMesh[2] < tile->header->bmax[2]) maxNavMesh[2] = tile->header->bmax[2];
-        }
-    }
-    
+    testNavMesh(navMesh);
     
     // save to bin file
     std::string binPath;
