@@ -159,7 +159,7 @@ void objToNavmeshBin(std::string& inDir,
     sample->collectSettings(settings);
     sample->handleSettings();
     geom->saveGeomSet(&settings);
-
+    
     // build navmesh
     std::cout << "building navmesh\n";
     if (!sample->handleBuild()) {
@@ -167,6 +167,26 @@ void objToNavmeshBin(std::string& inDir,
         return;
     }
     std::cout << "done building navmesh\n";
+    
+    // test navmesh
+    const float* minMesh = geom->getMeshBoundsMin();
+    const float* maxMesh = geom->getNavMeshBoundsMax();
+    const dtNavMesh* navMesh = sample->getNavMesh();
+    float minNavMesh[3]={99999, 99999, 99999};
+    float maxNavMesh[3]={-99999, -99999, -99999};
+    for (int i = 0; i < navMesh->getMaxTiles(); i++) {
+        const dtMeshTile* tile = navMesh->getTile(i);
+        if ((NULL != tile) && (0 < tile->dataSize)) {
+            if (minNavMesh[0] > tile->header->bmin[0]) minNavMesh[0] = tile->header->bmin[0];
+            if (minNavMesh[1] > tile->header->bmin[1]) minNavMesh[1] = tile->header->bmin[1];
+            if (minNavMesh[2] > tile->header->bmin[2]) minNavMesh[2] = tile->header->bmin[2];
+            if (maxNavMesh[0] > tile->header->bmax[0]) maxNavMesh[0] = tile->header->bmax[0];
+            if (maxNavMesh[1] > tile->header->bmax[1]) maxNavMesh[1] = tile->header->bmax[1];
+            if (maxNavMesh[2] > tile->header->bmax[2]) maxNavMesh[2] = tile->header->bmax[2];
+        }
+    }
+    std::cout << 
+    
     
     // save to bin file
     std::string binPath;
@@ -410,7 +430,7 @@ void mainOneBigOne() {
     std::string objFilename = "L19.obj";
     std::string binFilename = "L19.obj.bin";
     objToNavmeshBin(inDir, outDir, objFilename);
-    navmeshBinTestPaths(outDir + "/" + binFilename);
+//    navmeshBinTestPaths(outDir + "/" + binFilename);
     std::cout << "exiting mainOneBigOne\n";
 }
 
