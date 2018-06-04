@@ -271,9 +271,10 @@ void Sample_TileMesh::handleSettings()
 
 		// Max tiles and max polys affect how the tile IDs are caculated.
 		// There are 22 bits available for identifying a tile and a polygon.
-		int tileBits = rcMin((int)ilog2(nextPow2(tw*th)), 14);
-		if (tileBits > 14) tileBits = 14;
-		int polyBits = 22 - tileBits;
+        int moreBits = sizeof(dtPolyRef) * 8 - 32;
+		int tileBits = rcMin((int)ilog2(nextPow2(tw*th)), 14 + moreBits);
+		if (tileBits > (14 + moreBits)) tileBits = 14 + moreBits;
+		int polyBits = 22 - tileBits + moreBits;
 		m_maxTiles = 1 << tileBits;
 		m_maxPolysPerTile = 1 << polyBits;
 		snprintf(text, 64, "Max Tiles  %d", m_maxTiles);
