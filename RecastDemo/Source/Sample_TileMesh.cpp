@@ -20,6 +20,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
+#include <iostream>
 #include "SDL.h"
 #include "SDL_opengl.h"
 #ifdef __APPLE__
@@ -740,6 +741,37 @@ void Sample_TileMesh::removeTile(const float* pos)
 	m_navMesh->removeTile(m_navMesh->getTileRefAt(tx,ty,0),0,0);
 }
 
+static void printStatusError(dtStatus status, int x, int y) {
+    bool isBad = false;
+    if (dtStatusDetail(status, DT_WRONG_MAGIC)) {
+        std::cerr << "DT_WRONG_MAGIC\n";
+    }
+    if (dtStatusDetail(status, DT_WRONG_VERSION)) {
+        std::cerr << "DT_WRONG_VERSION\n";
+    }
+    if (dtStatusDetail(status, DT_OUT_OF_MEMORY)) {
+        std::cerr << "DT_OUT_OF_MEMORY\n";
+    }
+    if (dtStatusDetail(status, DT_INVALID_PARAM)) {
+        std::cerr << "DT_INVALID_PARAM\n";
+    }
+    if (dtStatusDetail(status, DT_BUFFER_TOO_SMALL)) {
+        std::cerr << "DT_BUFFER_TOO_SMALL\n";
+    }
+    if (dtStatusDetail(status, DT_OUT_OF_NODES)) {
+        std::cerr << "DT_OUT_OF_NODES\n";
+    }
+    if (dtStatusDetail(status, DT_PARTIAL_RESULT)) {
+        std::cerr << "DT_PARTIAL_RESULT\n";
+    }
+    if (dtStatusDetail(status, DT_ALREADY_OCCUPIED)) {
+        std::cerr << "DT_ALREADY_OCCUPIED\n";
+    }
+    if (isBad) {
+        std::cout << "ERROR for [y, x] = [" << y << ", " << x << "]\n";
+    }
+}
+
 void Sample_TileMesh::buildAllTiles()
 {
 	if (!m_geom) return;
@@ -758,6 +790,8 @@ void Sample_TileMesh::buildAllTiles()
 	// Start the build process.
 	m_ctx->startTimer(RC_TIMER_TEMP);
 
+    std::cout << "[th, tw] = [" << th << ", " << tw << "]\n";
+    
 	for (int y = 0; y < th; ++y)
 	{
 		for (int x = 0; x < tw; ++x)
@@ -769,7 +803,7 @@ void Sample_TileMesh::buildAllTiles()
 			m_lastBuiltTileBmax[0] = bmin[0] + (x+1)*tcs;
 			m_lastBuiltTileBmax[1] = bmax[1];
 			m_lastBuiltTileBmax[2] = bmin[2] + (y+1)*tcs;
-			
+		
 			int dataSize = 0;
 			unsigned char* data = buildTileMesh(x, y, m_lastBuiltTileBmin, m_lastBuiltTileBmax, dataSize);
 			if (data)
@@ -780,6 +814,7 @@ void Sample_TileMesh::buildAllTiles()
 				dtStatus status = m_navMesh->addTile(data,dataSize,DT_TILE_FREE_DATA,0,0);
 				if (dtStatusFailed(status))
 					dtFree(data);
+                    printStatusError(status, x, y);
 			}
 		}
 	}
