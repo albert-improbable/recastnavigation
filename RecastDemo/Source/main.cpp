@@ -236,30 +236,29 @@ void objToNavmeshBin(std::string& inDir,
 }
 
 void printStatusError(dtStatus status) {
-    if (dtStatusSucceed(status)) {
-        std::cout << "Success!";
-    } else if (dtStatusFailed(status)) {
-        if (dtStatusDetail(status, DT_WRONG_MAGIC)) {
-            std::cerr << "DT_WRONG_MAGIC\n";
-        } else if (dtStatusDetail(status, DT_WRONG_VERSION)) {
-            std::cerr << "DT_WRONG_VERSION\n";
-        } else if (dtStatusDetail(status, DT_OUT_OF_MEMORY)) {
-            std::cerr << "DT_OUT_OF_MEMORY\n";
-        } else if (dtStatusDetail(status, DT_INVALID_PARAM)) {
-            std::cerr << "DT_INVALID_PARAM\n";
-        } else if (dtStatusDetail(status, DT_BUFFER_TOO_SMALL)) {
-            std::cerr << "DT_BUFFER_TOO_SMALL\n";
-        } else if (dtStatusDetail(status, DT_OUT_OF_NODES)) {
-            std::cerr << "DT_OUT_OF_NODES\n";
-        } else if (dtStatusDetail(status, DT_PARTIAL_RESULT)) {
-            std::cerr << "DT_PARTIAL_RESULT\n";
-        } else if (dtStatusDetail(status, DT_ALREADY_OCCUPIED)) {
-            std::cerr << "DT_ALREADY_OCCUPIED\n";
-        } else {
-            std::cerr << "Unknown badness [" << status << "]\n";
-        }
-    } else {
-        std::cerr << "Unexpected status [" << status << "]\n";
+    if (dtStatusDetail(status, DT_WRONG_MAGIC)) {
+        std::cerr << "DT_WRONG_MAGIC\n";
+    }
+    if (dtStatusDetail(status, DT_WRONG_VERSION)) {
+        std::cerr << "DT_WRONG_VERSION\n";
+    }
+    if (dtStatusDetail(status, DT_OUT_OF_MEMORY)) {
+        std::cerr << "DT_OUT_OF_MEMORY\n";
+    }
+    if (dtStatusDetail(status, DT_INVALID_PARAM)) {
+        std::cerr << "DT_INVALID_PARAM\n";
+    }
+    if (dtStatusDetail(status, DT_BUFFER_TOO_SMALL)) {
+        std::cerr << "DT_BUFFER_TOO_SMALL\n";
+    }
+    if (dtStatusDetail(status, DT_OUT_OF_NODES)) {
+        std::cerr << "DT_OUT_OF_NODES\n";
+    }
+    if (dtStatusDetail(status, DT_PARTIAL_RESULT)) {
+        std::cerr << "DT_PARTIAL_RESULT\n";
+    }
+    if (dtStatusDetail(status, DT_ALREADY_OCCUPIED)) {
+        std::cerr << "DT_ALREADY_OCCUPIED\n";
     }
 }
 
@@ -461,7 +460,7 @@ void mainOneBigOne() {
     std::string objFilename = "L19.obj";
     std::string binFilename = "L19.obj.bin";
     objToNavmeshBin(inDir, outDir, objFilename);
-//    navmeshBinTestPaths(outDir + "/" + binFilename);
+    navmeshBinTestPaths(outDir + "/" + binFilename);
     std::cout << "exiting mainOneBigOne\n";
 }
 
