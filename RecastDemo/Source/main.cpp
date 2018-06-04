@@ -107,7 +107,14 @@ std::string toString(const float* pos, int len = 3) {
     return ss.str();
 }
 
-static void testNavMesh(const dtNavMesh *navMesh) {
+bool isWithin(float a, float b, float percentage) {
+    float diff = abs(a - b);
+    float max = abs(fmax(a, b));
+    float maxDiff = max * percentage;
+    return (diff <= maxDiff);
+}
+
+void testNavMesh(const dtNavMesh *navMesh, const float* minMesh, const float* maxMesh) {
     float minNavMesh[3]={99999, 99999, 99999};
     float maxNavMesh[3]={-99999, -99999, -99999};
     for (int i = 0; i < navMesh->getMaxTiles(); i++) {
@@ -120,6 +127,28 @@ static void testNavMesh(const dtNavMesh *navMesh) {
             if (maxNavMesh[1] < tile->header->bmax[1]) maxNavMesh[1] = tile->header->bmax[1];
             if (maxNavMesh[2] < tile->header->bmax[2]) maxNavMesh[2] = tile->header->bmax[2];
         }
+    }
+    
+    bool problem = false;
+    
+    for (int i = 0; i < 3; i++) {
+        if (!isWithin(minMesh[i], minNavMesh[i], 0.06)) {
+            problem = true;
+            std::cout << "Problem with min mesh vs navmesh\n" << toString(minMesh) << "\n" << toString(minNavMesh) << "\n";
+            i = 3;
+        }
+    }
+    
+    for (int i = 0; i < 3; i++) {
+        if (!isWithin(maxMesh[i], maxNavMesh[i], 0.06)) {
+            problem = true;
+            std::cout << "Problem with max mesh vs navmesh\n" << toString(maxMesh) << "\n" << toString(maxNavMesh) << "\n";
+            i = 3;
+        }
+    }
+    
+    if (problem) {
+        std::cout << "damn!\n";
     }
 }
 
