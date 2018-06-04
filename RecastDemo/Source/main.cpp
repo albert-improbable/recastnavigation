@@ -217,7 +217,7 @@ void objToNavmeshBin(std::string& inDir,
     const float* minMesh = geom->getMeshBoundsMin();
     const float* maxMesh = geom->getNavMeshBoundsMax();
     const dtNavMesh* navMesh = sample->getNavMesh();
-    testNavMesh(navMesh);
+    testNavMesh(navMesh, minMesh, maxMesh);
     
     // save to bin file
     std::string binPath;

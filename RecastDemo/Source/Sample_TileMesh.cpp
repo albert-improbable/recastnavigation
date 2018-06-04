@@ -745,27 +745,35 @@ static void printStatusError(dtStatus status, int x, int y) {
     bool isBad = false;
     if (dtStatusDetail(status, DT_WRONG_MAGIC)) {
         std::cerr << "DT_WRONG_MAGIC\n";
+        isBad = true;
     }
     if (dtStatusDetail(status, DT_WRONG_VERSION)) {
         std::cerr << "DT_WRONG_VERSION\n";
+        isBad = true;
     }
     if (dtStatusDetail(status, DT_OUT_OF_MEMORY)) {
         std::cerr << "DT_OUT_OF_MEMORY\n";
+        isBad = true;
     }
     if (dtStatusDetail(status, DT_INVALID_PARAM)) {
         std::cerr << "DT_INVALID_PARAM\n";
+        isBad = true;
     }
     if (dtStatusDetail(status, DT_BUFFER_TOO_SMALL)) {
         std::cerr << "DT_BUFFER_TOO_SMALL\n";
+        isBad = true;
     }
     if (dtStatusDetail(status, DT_OUT_OF_NODES)) {
         std::cerr << "DT_OUT_OF_NODES\n";
+        isBad = true;
     }
     if (dtStatusDetail(status, DT_PARTIAL_RESULT)) {
         std::cerr << "DT_PARTIAL_RESULT\n";
+        isBad = true;
     }
     if (dtStatusDetail(status, DT_ALREADY_OCCUPIED)) {
         std::cerr << "DT_ALREADY_OCCUPIED\n";
+        isBad = true;
     }
     if (isBad) {
         std::cout << "ERROR for [y, x] = [" << y << ", " << x << "]\n";
