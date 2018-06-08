@@ -461,14 +461,14 @@ void navMeshToOBJ(std::string binPath, std::string objPath) {
         const dtMeshHeader* header = tile->header;
         if ((NULL != tile) && (0 < tile->dataSize)) {
             // print all the vertices for the tile
-            for (int v = 0; v < header->vertCount; v+=3) {
-                objFile << "v " << tile->verts[v] << " " << tile->verts[v + 1] << " " << tile->verts[v + 2] << "\n";
+            for (int v = 0; v < header->vertCount; v++) {
+                objFile << "v " << tile->verts[3*v] << " " << tile->verts[3*v + 1] << " " << tile->verts[3*v + 2] << "\n";
             }
             
             // make faces for all the polygons
             for (int p = 0; p < header->polyCount; p++) {
                 dtPoly poly = tile->polys[p];
-                objFile << std::endl << "vt";
+                objFile << "f";
                 for (int v = 0; v < poly.vertCount; v++) {
                     objFile << " " << (poly.verts[v] + vertexCount);
                 }
