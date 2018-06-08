@@ -442,6 +442,43 @@ std::string getFilename(int col, int row, int level) {
     return filename;
 }
 
+void navMeshToOBJ(std::string binPath, std::string objPath) {
+    std::ofstream objFile;
+    objFile.open(objPath);
+    
+    Sample* sample = g_samples[1].create();  // tile mesh
+    if (!sample) return;
+    
+    // load navmesh bin file
+    const dtNavMesh* navMesh = sample->loadAll(binPath.c_str());
+    
+    int offset = 0;
+    for (int i = 0; i < navMesh->getMaxTiles(); i++) {
+        const dtMeshTile* tile = navMesh->getTile(i);
+        const dtMeshHeader* header = tile->header;
+        if ((NULL != tile) && (0 < tile->dataSize)) {
+            // print all the vertices for the tile
+            for (int v = 0; v < header->vertCount; v+=3) {
+                objFile << "v " << tile->verts[v] << " " << tile->verts[v + 1] << " " << tile->verts[v + 2] << "\n";
+            }
+            
+            // make faces for all the polygons
+            for (int p = 0; p < header->polyCount; p++) {
+                dtPoly poly = tile->polys[p];
+                objFile << std::endl << "vt" << std::endl;
+                for (int v = 0; v < poly.vertCount; v++) {
+                    objFile << " " << (poly.verts[v] + offset);
+                }
+                objFile << "\n";
+            }
+            offset += header->vertCount;
+        }
+    }
+    
+    objFile.close();
+    delete sample;
+}
+
 void mainAlbert(int cols, int rows)
 {
     std::string inDir = "/Users/albertlaw/Downloads/Muscat 100m OBJ/Data/L19";
@@ -458,9 +495,11 @@ void mainOneBigOne() {
     std::string inDir = "/Users/albertlaw/Downloads/Muscat 100m OBJ/Data/L19";
     std::string outDir = "/Users/albertlaw/code/recastnavigation/RecastDemo/Bin/Tile";
     std::string objFilename = "L19.obj";
-    std::string binFilename = "L19.obj.bin";
+    std::string binFilename = "L19.obj.bin64";
+    std::string binObjFilename = "L19.obj.bin64.obj";
     objToNavmeshBin(inDir, outDir, objFilename);
-    navmeshBinTestPaths(outDir + "/" + binFilename);
+//    navmeshBinTestPaths(outDir + "/" + binFilename);
+    navMeshToOBJ(outDir + "/" + binFilename, outDir + "/" + binObjFilename);
     std::cout << "exiting mainOneBigOne\n";
 }
 
