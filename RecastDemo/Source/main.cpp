@@ -224,7 +224,7 @@ void objToNavmeshBin(std::string& inDir,
     binPath.append(outDir);
     binPath.append("/");
     binPath.append(filename);
-    binPath.append(".bin");
+    binPath.append(".bin64");
     std::cout << "saving bin file\n";
     sample->saveAll(binPath.c_str(), sample->m_navMesh);
     sample->saveAll("/Users/albertlaw/code/recastnavigation/RecastDemo/Bin/all_tiles_navmesh.bin", sample->m_navMesh);
@@ -443,16 +443,19 @@ std::string getFilename(int col, int row, int level) {
 }
 
 void navMeshToOBJ(std::string binPath, std::string objPath) {
-    std::ofstream objFile;
-    objFile.open(objPath);
-    
     Sample* sample = g_samples[1].create();  // tile mesh
     if (!sample) return;
     
     // load navmesh bin file
+    std::cout << "Reading bin64 file from [" << binPath << "]\n";
     const dtNavMesh* navMesh = sample->loadAll(binPath.c_str());
     
-    int offset = 0;
+    std::ofstream objFile;
+    objFile.open(objPath);
+    std::cout << "Writing OBJ file to [" << objPath << "]\n";
+    
+    int vertexCount = 0;
+    int faceCount = 0;
     for (int i = 0; i < navMesh->getMaxTiles(); i++) {
         const dtMeshTile* tile = navMesh->getTile(i);
         const dtMeshHeader* header = tile->header;
@@ -465,16 +468,19 @@ void navMeshToOBJ(std::string binPath, std::string objPath) {
             // make faces for all the polygons
             for (int p = 0; p < header->polyCount; p++) {
                 dtPoly poly = tile->polys[p];
-                objFile << std::endl << "vt" << std::endl;
+                objFile << std::endl << "vt";
                 for (int v = 0; v < poly.vertCount; v++) {
-                    objFile << " " << (poly.verts[v] + offset);
+                    objFile << " " << (poly.verts[v] + vertexCount);
                 }
                 objFile << "\n";
             }
-            offset += header->vertCount;
+            vertexCount += header->vertCount;
+            faceCount += header->polyCount;
         }
     }
     
+    std::cout << "Vertices written: " << vertexCount << "\n";
+    std::cout << "Faces written: " << faceCount << "\n";
     objFile.close();
     delete sample;
 }
@@ -497,7 +503,7 @@ void mainOneBigOne() {
     std::string objFilename = "L19.obj";
     std::string binFilename = "L19.obj.bin64";
     std::string binObjFilename = "L19.obj.bin64.obj";
-    objToNavmeshBin(inDir, outDir, objFilename);
+//    objToNavmeshBin(inDir, outDir, objFilename);
 //    navmeshBinTestPaths(outDir + "/" + binFilename);
     navMeshToOBJ(outDir + "/" + binFilename, outDir + "/" + binObjFilename);
     std::cout << "exiting mainOneBigOne\n";
