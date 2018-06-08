@@ -470,7 +470,7 @@ void navMeshToOBJ(std::string binPath, std::string objPath) {
                 dtPoly poly = tile->polys[p];
                 objFile << "f";
                 for (int v = 0; v < poly.vertCount; v++) {
-                    objFile << " " << (poly.verts[v] + vertexCount);
+                    objFile << " " << (poly.verts[v] + vertexCount + 1);  // base-1!!!
                 }
                 objFile << "\n";
             }
