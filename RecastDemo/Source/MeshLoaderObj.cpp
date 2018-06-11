@@ -54,7 +54,7 @@ void rcMeshLoaderObj::addVertex(float x, float y, float z, int& cap)
 	float* dst = &m_verts[m_vertCount*3];
 	*dst++ = x*m_scale;
 	*dst++ = z*m_scale;
-	*dst++ = y*m_scale;
+	*dst++ = -y*m_scale;
 	m_vertCount++;
 }
 
