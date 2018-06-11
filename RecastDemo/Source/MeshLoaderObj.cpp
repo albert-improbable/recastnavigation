@@ -53,8 +53,8 @@ void rcMeshLoaderObj::addVertex(float x, float y, float z, int& cap)
 	}
 	float* dst = &m_verts[m_vertCount*3];
 	*dst++ = x*m_scale;
+	*dst++ = y*m_scale;
 	*dst++ = z*m_scale;
-	*dst++ = -y*m_scale;
 	m_vertCount++;
 }
 
@@ -71,8 +71,8 @@ void rcMeshLoaderObj::addTriangle(int a, int b, int c, int& cap)
 	}
 	int* dst = &m_tris[m_triCount*3];
 	*dst++ = a;
-	*dst++ = c;
 	*dst++ = b;
+	*dst++ = c;
 	m_triCount++;
 }
 
@@ -193,7 +193,7 @@ bool rcMeshLoaderObj::load(const std::string& filename)
 		{
 			// Vertex pos
 			sscanf(row+1, "%f %f %f", &x, &y, &z);
-			addVertex(x, y, z, vcap);
+			addVertex(x, z, -y, vcap);
 		}
 		if (row[0] == 'f')
 		{
