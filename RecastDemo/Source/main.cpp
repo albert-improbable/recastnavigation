@@ -503,8 +503,8 @@ void mainOneBigOne() {
     std::string objFilename = "L19.obj";
     std::string binFilename = "L19.obj.bin64";
     std::string binObjFilename = "L19.obj.bin64.obj";
-//    objToNavmeshBin(inDir, outDir, objFilename);
-//    navmeshBinTestPaths(outDir + "/" + binFilename);
+    objToNavmeshBin(inDir, outDir, objFilename);
+    navmeshBinTestPaths(outDir + "/" + binFilename);
     navMeshToOBJ(outDir + "/" + binFilename, outDir + "/" + binObjFilename);
     std::cout << "exiting mainOneBigOne\n";
 }
